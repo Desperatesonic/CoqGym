@@ -217,7 +217,9 @@ def iter_coq_files(data_root, callback, show_progress=False):
     coq_files = glob(os.path.join(data_root, '**/*.json'), recursive=True)
     bar = ProgressBar(max_value=len(coq_files))
     for i, f in enumerate(coq_files):
-        file_data = json.load(open(f))
+        filecontent = open(f)
+        file_data = json.load(filecontent)
+        filecontent.close()
         callback(f, file_data)
         if show_progress:
             bar.update(i)
