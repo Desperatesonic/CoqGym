@@ -123,8 +123,11 @@ if __name__ == '__main__':
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             if args.filter:
-                pickle.dump(step, open(os.path.join(dirname, '%s-%08d.pickle' % (args.filter, i)), 'wb'))
+                filename = os.path.join(dirname, '%s-%08d.pickle' % (args.filter, i))
             else:
-                pickle.dump(step, open(os.path.join(dirname, '%08d.pickle' % i), 'wb'))
+                filename = os.path.join(dirname, '%08d.pickle' % i)
+            fileobj = open(filename, 'wb')
+            pickle.dump(step, fileobj)
+            fileobj.close()
 
     print('output saved to ', args.output)

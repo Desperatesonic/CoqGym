@@ -73,10 +73,10 @@ class Prover(nn.Module):
           self.embed_terms([environment], [local_context], [goal])
         environment = {'idents': [v['qualid'] for v in environment],
                        'embeddings': environment_embeddings[0],
-                       'quantified_idents': [v['ast'].quantified_idents for v in environment]}
+                       'quantified_idents': [v['ast'].quantified_idents for v in environment]}  # quantified_idents are not used
         local_context = {'idents': [v['ident'] for v in local_context],
                          'embeddings': context_embeddings[0],
-                         'quantified_idents': [v['ast'].quantified_idents for v in local_context]}
+                         'quantified_idents': [v['ast'].quantified_idents for v in local_context]}  # quantified_idents are not used
         goal = {'embeddings': goal_embeddings, 'quantified_idents': goal.quantified_idents}
         asts = self.tactic_decoder.beam_search(environment, local_context, goal)
         return asts

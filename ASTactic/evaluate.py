@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime
 sys.setrecursionlimit(100000)
 sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../')))
@@ -19,15 +20,15 @@ import pdb
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('method', type=str)
-    parser.add_argument('eval_id', type=str)
+    parser.add_argument('--method', type=str, default='ours')
+    parser.add_argument('--eval_id', type=str, default=str(datetime.now())[:-7].replace(' ', '-')+'-TEST')
     parser.add_argument('--datapath', type=str, default='../data')
     parser.add_argument('--projs_split', type=str, default='../projs_split.json')
     parser.add_argument('--split', choices=['train', 'valid', 'test'], type=str, default='test')
-    parser.add_argument('--file', type=str)
-    parser.add_argument('--proof', type=str)
+    parser.add_argument('--file', type=str)  # , default='../data/StructTact/Assoc.json'
+    parser.add_argument('--proof', type=str)  # , default="get_set_same"
     parser.add_argument('--filter', type=str)
-    parser.add_argument('--path', type=str)
+    parser.add_argument('--path', type=str, default='model.pth')
     parser.add_argument('--output_dir', type=str, default='evaluation')
     parser.add_argument('--max_num_tactics', type=int, default=300)
     parser.add_argument('--timeout', type=int, default=600)

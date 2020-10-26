@@ -80,7 +80,7 @@ class TacticDecoder(nn.Module):
         self.symbol_embeddings = nn.Embedding(len(self.grammar.symbols), opts.symbol_dim)
         self.production_rule_embeddings = nn.Embedding(len(self.grammar.production_rules), opts.embedding_dim)
         self.lex_rule_embeddings = nn.Embedding(len(self.grammar.terminal_symbols), opts.embedding_dim)
-        self.default_action_embedding = torch.zeros(self.opts.embedding_dim, device=self.opts.device)
+        self.default_action_embedding = torch.zeros(self.opts.embedding_dim, device=self.opts.device)  # trainable or not?
         self.default_state = torch.zeros(self.opts.hidden_dim, device=self.opts.device)
         self.controller = nn.GRUCell(2 * opts.embedding_dim + 2 * opts.term_embedding_dim + 6 + opts.hidden_dim + opts.symbol_dim, opts.hidden_dim)
         self.state_decoder = nn.Sequential(nn.Linear(opts.hidden_dim, opts.embedding_dim), nn.Tanh())
@@ -106,10 +106,10 @@ class TacticDecoder(nn.Module):
 
     def gather_frontier_info(self, frontiers):
         indice = []  # indice for incomplete ASTs
-        s_tm1 = []
-        a_tm1 = []
-        p_t = []
-        symbols = []
+        s_tm1 = []   # former node state (previous node in one command or parent node)
+        a_tm1 = []   # former node action
+        p_t = []    # parent node state and action
+        symbols = []    # terminals and nonterminals except tokens
 
         for i, stack in enumerate(frontiers):
             if stack == []:
@@ -333,6 +333,7 @@ class TacticDecoder(nn.Module):
     def beam_search(self, environment, local_context, goal):
         # initialize the trees in the beam
         assert goal['embeddings'].size(0) == 1  # only support batchsize == 1
+        # beam: all children, frontiers: children which are not tokens
         beam, frontiers = self.initialize_trees(1)
         log_likelihood = [0.]  # the (unnormalized) objective function maximized by the beam search
         complete_trees = []  # the complete ASTs generated during the beam search
@@ -343,7 +344,7 @@ class TacticDecoder(nn.Module):
             indice, s_tm1, a_tm1, p_t, n_t = self.gather_frontier_info(frontiers)
             # check if there are complete trees 
             for i in range(len(beam)):
-                if i not in indice:
+                if i not in indice:  # for those children of nodes which are token
                     normalized_log_likelihood = log_likelihood[i] / (expansion_step ** self.opts.lens_norm)  # length normalization
                     beam[i].traverse_pre(clear_state) 
                     complete_trees.append((beam[i], normalized_log_likelihood))
@@ -360,7 +361,7 @@ class TacticDecoder(nn.Module):
             for j, idx in enumerate(indice):
                 stack = frontiers[idx]
                 node = stack[-1]
-                node.state = states[j]
+                node.state = states[j]  # update node's state
 
                 if isinstance(node, NonterminalNode):
                     applicable_rules = self.grammar.get_applicable_rules(node.symbol)
