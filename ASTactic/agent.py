@@ -14,8 +14,10 @@ import pdb
 from hashlib import sha1
 import gc
 from copy import deepcopy
+from pprint import pprint
 from time import time
-
+def print(*args):
+    return
 
 def action_seq_loss(logits_batch, actions_batch, opts):
     assert len(logits_batch) == len(actions_batch)
@@ -168,6 +170,7 @@ class Agent:
 
         with FileEnv(filename, self.opts.max_num_tactics, self.opts.timeout, with_hammer=with_hammer, hammer_timeout=hammer_timeout) as file_env:
             results = []
+            pprint("number of proofs in "+filename+' is ' + str(len(file_env.proofs)))
             for proof_env in file_env:  # start a proof
                 if proof_name is not None and proof_env.proof['name'] != proof_name:
                     continue

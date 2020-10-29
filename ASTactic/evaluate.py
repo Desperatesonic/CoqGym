@@ -23,9 +23,9 @@ if __name__ == '__main__':
     parser.add_argument('--method', type=str, default='ours')
     parser.add_argument('--eval_id', type=str, default=str(datetime.now())[:-7].replace(' ', '-')+'-TEST')
     parser.add_argument('--datapath', type=str, default='../data')
-    parser.add_argument('--projs_split', type=str, default='../projs_split.json')
+    parser.add_argument('--projs_split', type=str, default='../projs_split2.json')
     parser.add_argument('--split', choices=['train', 'valid', 'test'], type=str, default='test')
-    parser.add_argument('--file', type=str)  # , default='../data/StructTact/Assoc.json'
+    parser.add_argument('--file', type=str)  #, default='../data/weak-up-to/Functions.json'
     parser.add_argument('--proof', type=str)  # , default="get_set_same"
     parser.add_argument('--filter', type=str)
     parser.add_argument('--path', type=str, default='model.pth')
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--depth_limit', type=int, default=50)
     parser.add_argument('--beam_width', type=int, default=20)  # lots of timeout when >200
     parser.add_argument('--num_tactic_candidates', type=int, default=20)
-    parser.add_argument('--lens_norm', type=float, default=0.5, help='lengths normalization')
+    parser.add_argument('--lens_norm', type=float, default=0.0, help='lengths normalization')  # 0.5
     parser.add_argument('--tac_grammar', type=str, default='tactics.ebnf')
     parser.add_argument('--term_embedding_dim', type=int, default=256)
     parser.add_argument('--size_limit', type=int, default=50)
@@ -46,7 +46,8 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=0)
     opts = parser.parse_args()
     log(opts)
-    opts.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #opts.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    opts.device = torch.device('cpu')
     if opts.device.type == 'cpu':
         log('using CPU', 'WARNING')
 
