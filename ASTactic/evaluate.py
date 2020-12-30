@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--method', type=str, default='ours')
     parser.add_argument('--eval_id', type=str, default=str(datetime.now())[:-7].replace(' ', '-')+'-TEST')
-    parser.add_argument('--datapath', type=str, default='../data')
+    parser.add_argument('--datapath', type=str, default='../data2')
     parser.add_argument('--projs_split', type=str, default='../projs_split.json')
     parser.add_argument('--split', choices=['train', 'valid', 'test'], type=str, default='test')
     parser.add_argument('--file', type=str)  #, default='../data/weak-up-to/Functions.json'

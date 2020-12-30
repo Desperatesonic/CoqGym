@@ -197,8 +197,15 @@ def compare_types():
         bar.update(i)
     return
 
+def delete_cache():
+    files = glob('data2/**/*sexp_cache', recursive=True)
+    bar = ProgressBar(max_value=len(files))
+    for i, db_path in enumerate(files):
+        os.system('rm -r "%s"' % db_path)
+        bar.update(i)
 if __name__ == '__main__':
     #merge_lmdbs()
     #merge_proofs()
     #compare_types()
-    merge_proofs2()
+    #merge_proofs2()
+    delete_cache()
