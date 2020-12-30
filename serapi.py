@@ -9,7 +9,7 @@ import signal
 from itertools import chain
 import sexpdata
 from sexpdata import Symbol
-from utils import normalize_spaces, log
+from utils import normalize_spaces, log, normalize_goals_hypotheses
 import pdb
 
 
@@ -37,7 +37,10 @@ def escape(vernac_cmd):
 
 
 def symbol2str(s):
-    return s.value() if isinstance(s, Symbol) else str(s)
+    if isinstance(s, Symbol):
+        return s.value()
+    else:
+        return str(s)
 
 
 def print_mod_path(modpath):
@@ -73,9 +76,12 @@ class SerAPI:
         self.proc.expect_exact('(Feedback((doc_id 0)(span_id 1)(route 0)(contents Processed)))\0')
         self.send('Noop')
         self.states_stack = []
-
+        self.call_print_constr = 0
+        self.call_print_constr_success = 0
         # global printing options
         self.execute('Unset Printing Notations.')
+        # self.execute('Set Printing Notations.')
+
         self.execute('Unset Printing Wildcard.')
         self.execute('Set Printing Coercions.')
         self.execute('Unset Printing Allow Match Default Clause.')
@@ -271,6 +277,7 @@ class SerAPI:
             return [], [], [], []
         else:
             assert len(responses[1][2][1]) == 1
+            pprint_goals = self.query_goals2()
             def store_goals(goals_sexp):
                 goals = []
                 for g in goals_sexp:
@@ -288,12 +295,66 @@ class SerAPI:
                                   'sexp': type_sexp,
                                   'hypotheses': hypotheses[::-1]})
                 return goals
-            fg_goals = store_goals(responses[1][2][1][0][1][0][1])
+
+            def store_goals_new(goals_sexp, pprint_goals):
+
+                def process_hypothesis(type_sexp_h):
+                    string_output = type_sexp_h.split(':', 1)
+                    assert len(string_output) == 2
+                    return [x.strip() for x in string_output[0].split(',')], string_output[1].strip()
+
+                assert len(pprint_goals) == len(goals_sexp)
+                goals = []
+                goals_num = len(goals_sexp)
+                for g_inx in range(goals_num):
+                    g = goals_sexp[g_inx]
+                    hypotheses = []
+                    assert len(pprint_goals[g_inx][0]) == len(g[2][1])
+                    for i, h in enumerate(g[2][1]):
+                        h_sexp = sexpdata.dumps(h[2])
+                        type_sexp_h = pprint_goals[g_inx][0][i]
+                        ident_list, type_sexp_h = process_hypothesis(type_sexp_h)
+                        assert len(ident_list) == len(h[0])
+                        # term is an expression which defines an ident, and shares the same type.
+                        # after examination, every term list in one hypothesis dict only contains one or zero term
+                        hypotheses.append({'idents': [symbol2str(ident[1]) for ident in h[0][::-1]],
+                                           'term': [None if t == [] else self.print_constr(sexpdata.dumps(t)) for t in
+                                                    h[1]],
+                                           'type': type_sexp_h,
+                                           'sexp': h_sexp})
+
+                    type_sexp = sexpdata.dumps(g[1][1])
+                    goals.append({'id': int(g[0][1]),
+                                  'type': pprint_goals[g_inx][1],
+                                  'sexp': type_sexp,
+                                  'hypotheses': hypotheses[::-1]})
+                return goals
+
+            fg_goals = store_goals_new(responses[1][2][1][0][1][0][1], pprint_goals)
             bg_goals = store_goals(list(chain.from_iterable(chain.from_iterable(responses[1][2][1][0][1][1][1]))))
             shelved_goals = store_goals(responses[1][2][1][0][1][2][1])
             given_up_goals = store_goals(responses[1][2][1][0][1][3][1])
             return fg_goals, bg_goals, shelved_goals, given_up_goals
 
+    def query_goals2(self):
+        'Retrieve a list of open goals'
+        responses, _ = self.send('(Query ((pp((pp_format PpStr)))) Goals)')
+        assert responses[1][2][0] == Symbol('ObjList')
+        if responses[1][2][1] == []:  # no goals
+            return [], [], [], []
+        else:
+            assert len(responses[1][2][1]) == 1
+
+            if not hasattr(self, 'goals_buffer'):
+                self.goals_buffer = set()
+
+            goals = responses[1][2][1][0][1]
+            if goals != '':
+                goals = normalize_goals_hypotheses(goals)
+                #self.goals_buffer.add(goals)
+            else:
+                goals = []
+            return goals
 
     def has_open_goals(self):
         responses, _ = self.send('(Query () Goals)')
@@ -302,12 +363,14 @@ class SerAPI:
 
 
     def print_constr(self, sexp_str):
+        self.call_print_constr += 1
         if not hasattr(self, 'constr_cache'):
             self.constr_cache = {}
         if sexp_str not in self.constr_cache:
             try:
                 responses, _ = self.send('(Print ((pp_format PpStr)) (CoqConstr %s))' % sexp_str)
                 self.constr_cache[sexp_str] = normalize_spaces(symbol2str(responses[1][2][1][0][1]))
+                self.call_print_constr_success += 1
             except CoqExn as ex:
                 if ex.err_msg == 'Not_found':
                     return None
@@ -340,6 +403,9 @@ class SerAPI:
 
     def execute(self, cmd, return_ast=False):
         'Execute a vernac command'
+        if cmd in ['Set Printing Notations.', 'Unset Printing Notations.']:
+            print(cmd)
+
         state_id, ast = self.send_add(cmd, return_ast)
         responses, _ = self.send('(Exec %d)' % state_id)
         return responses, sexpdata.dumps(ast)

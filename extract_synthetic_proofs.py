@@ -207,9 +207,11 @@ if __name__ == '__main__':
     arg_parser.add_argument('--proof', type=str, help='The proof to extract')
     arg_parser.add_argument('--max_length', type=int, default=4, help='The maximum length for synthetic proofs')
     arg_parser.add_argument('--timeout', type=int, default=3600, help='Timeout for SerAPI')
-    arg_parser.add_argument('--data_path', type=str, default='./data')
+    arg_parser.add_argument('--data_path', type=str, default='./data2')
     args = arg_parser.parse_args()
     print(args)
+
+    # warning this is not needed because there is no synthetic proofs included in proof_steps
 
     human_proof_file = dst_filename(args.file, args.data_path) + '-PROOFS/' + args.proof + '.json'
     if not os.path.exists(human_proof_file):

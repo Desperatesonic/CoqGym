@@ -26,7 +26,7 @@ def parse_goal(g):
     return local_context, goal
 
 
-grammar = CFG('tactics.ebnf', 'tactic_expr')
+grammar = CFG('tactics.ebnf', 'tactic_expr')  # update CFG
 tree_builder = TreeBuilder(grammar)
 
 def tactic2actions(tac_str):
@@ -76,7 +76,7 @@ def process_proof(filename, proof_data):
         assert step['command'][1] == 'VernacExtend'
         assert step['command'][0].endswith('.')
         # environment
-        env = filter_env(proof_data['env'])
+        env = filter_env(proof_data['env'])  # TODO full env
         # local context & goal
         if step['goal_ids']['fg'] == []:
             num_discarded += 1
@@ -86,7 +86,7 @@ def process_proof(filename, proof_data):
         # tactic
         tac_str = step['command'][0][:-1]
         try:
-            actions = tactic2actions(tac_str)
+            actions = tactic2actions(tac_str)  # TODO update the function of tactic to action
         except (UnexpectedCharacters, ParseError) as ex:
             num_discarded += 1
             continue

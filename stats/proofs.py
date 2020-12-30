@@ -6,10 +6,13 @@ import pandas as pd
 from collections import defaultdict
 import numpy as np
 import re
+import os
+import json
 import pdb
-
+projs_split = json.load(open('../projs_split.json'))
 arg_parser = argparse.ArgumentParser(description='get the statistics of the proofs')
 arg_parser.add_argument('--synthetic', action='store_true')
+arg_parser.add_argument('--no_traindataonly', action='store_true')
 arg_parser.add_argument('--output', default='proofs_statistics.csv', type=str, help='the csv file to output')
 args = arg_parser.parse_args()
 
@@ -18,7 +21,10 @@ data = defaultdict(list)
 def process_proof(filename, proof_data):
     if args.synthetic and 'goal_id' not in proof_data:
         return
-    m = re.fullmatch(r'./data/(?P<project>[^/]+)/(?P<file>.+).json', filename)
+    proj = filename.split(os.path.sep)[2]
+    if (not args.no_traindataonly) and (proj not in projs_split['projs_train']):
+        return
+    m = re.fullmatch(r'../data/(?P<project>[^/]+)/(?P<file>.+).json', filename)
     data['project'].append(m['project'])
     data['file'].append(m['file'] + '.v')
     data['name'].append(proof_data['name'])

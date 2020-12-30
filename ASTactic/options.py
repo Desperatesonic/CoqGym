@@ -20,7 +20,7 @@ def parse_args():
     # experimental setup
     parser.add_argument('--include_synthetic', action='store_true')
     parser.add_argument('--exp_id', type=str)
-    parser.add_argument('--datapath', type=str, default='proof_steps/human')
+    parser.add_argument('--datapath', type=str, default='proof_steps')
     parser.add_argument('--projs_split', type=str, default='../projs_split.json')
     parser.add_argument('--num_epochs', type=int, default=4)
     parser.add_argument('--resume', type=str, help='the model checkpoint to resume')
@@ -60,8 +60,8 @@ def parse_args():
     np.random.seed(opts.seed)
     random.seed(opts.seed)
 
-    if opts.include_synthetic:
-        opts.datapath = opts.datapath.replace('/human', '/*')
+    # if opts.include_synthetic:
+    #    opts.datapath = opts.datapath.replace('/human', '/*')
 
     if opts.exp_id is None:
         opts.exp_id = str(datetime.now())[:-7].replace(' ', '-')

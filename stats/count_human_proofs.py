@@ -5,7 +5,7 @@ from collections import defaultdict
 import json
 import pdb
 
-projs_split = json.load(open('projs_split.json'))
+projs_split = json.load(open('../projs_split.json'))
 cnt = defaultdict(int)
 cnt_projs = defaultdict(int)
 

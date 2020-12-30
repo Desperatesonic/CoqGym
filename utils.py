@@ -54,6 +54,57 @@ def remove_comments(code):
 def normalize_spaces(s):
     return re.sub(r'\s+', ' ', s, flags=re.DOTALL)
 
+def normalize_goals_hypotheses(s):
+    #print(s)
+    while s.startswith('\n'):
+        s = s[1:]
+    slines = s.split('\n')
+    goalsnum = slines.count('============================')
+    linesnum = len(slines)
+    goal_contexts = []
+    goalflag = False
+    goalflag2 = False
+    Hypotheses = []
+    startstr = ''
+    for i in range(linesnum):
+        templine = slines[i]
+        templine0 = 'None'
+        if i > 0:
+            templine0 = slines[i-1]
+        templine1 = templine0.rstrip()
+        if templine.startswith('  ') and not ((len(templine1) and templine1[-1] in (':', ',', '=', '>')) or templine.startswith('  |') or templine.startswith('  end ')):
+            templine = templine[2:]
+        if templine == 'none':
+            continue
+        elif templine.startswith(' '):
+            startstr += templine
+        elif templine.startswith('='):
+            assert templine == '============================'
+            goalflag = True
+        else:
+            if goalflag2:
+                assert startstr != ''
+                goalflag2 = False
+                goalstr = normalize_spaces(startstr)
+                newgoal_context = (tuple(Hypotheses), goalstr)
+                goal_contexts.append(newgoal_context)
+                Hypotheses = []
+            else:
+                if startstr != '':
+                    Hypotheses.append(normalize_spaces(startstr))
+            if goalflag:
+                goalflag2 = True
+                goalflag = False
+
+            startstr = templine
+
+    assert goalflag2
+    assert startstr != ''
+    goalstr = normalize_spaces(startstr)
+    newgoal_context = (tuple(Hypotheses), goalstr)
+    goal_contexts.append(newgoal_context)
+    assert goalsnum == len(goal_contexts)
+    return tuple(goal_contexts)
 
 def get_code(coq_code):
     def loc2code(bp, ep):

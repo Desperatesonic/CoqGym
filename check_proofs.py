@@ -7,7 +7,6 @@ import pdb
 
 
 def check_file(filename, sexp_cache, args):
-    print('\n' + filename)
     coq_filename = os.path.splitext(filename)[0] + '.v'
     fields = coq_filename.split(os.path.sep)
     loc2code = get_code(open(coq_filename, 'rb').read())
@@ -53,13 +52,26 @@ def dump(file_data, args):
 
 def process_file(filename):
     # extract a Coq file
+
+    coq_filename = os.path.splitext(filename)[0] + '.v'
+    fields = coq_filename.split(os.path.sep)
+    file_data_filename = os.path.sep.join(fields[2:])
+    file_data_coq_project = fields[1]
+    path = os.path.join(args.data_path, file_data_coq_project, file_data_filename)[:-2]
+    if os.path.isfile(path + '.json'):
+        return
+
     db_path = dst_filename(filename, args.data_path) + '-sexp_cache'
     try:
         os.makedirs(os.path.split(db_path)[0])
     except os.error:
             pass
     sexp_cache = SexpCache(db_path)
-    file_data = check_file(filename, sexp_cache, args)
+    try:
+        file_data = check_file(filename, sexp_cache, args)
+    except:
+        print(path +' failed')
+        return
     dump(file_data, args)
   
 
@@ -73,7 +85,8 @@ if __name__ == '__main__':
     arg_parser.add_argument('--meta_files', type=str, help='The file containing the paths of *.meta files (default to all *.meta files)')
     arg_parser.add_argument('--file', type=str, help='The meta file to process (default to all *.meta files)')
     arg_parser.add_argument('--timeout', type=int, default=600, help='Timeout for SerAPI')
-    arg_parser.add_argument('--data_path', type=str, default='./data')
+    arg_parser.add_argument('--data_path', type=str, default='./data2')
+    arg_parser.add_argument('--filter', type=str, default='9')
     args = arg_parser.parse_args()
     assert args.proj is None or args.meta_files is None
 
@@ -90,6 +103,9 @@ if __name__ == '__main__':
     print('%d Coq files to process' % len(meta_files))
 
     # process each of them
-    for filename in meta_files:
+    for i, filename in enumerate(meta_files):
+        if int(args.filter) != (i % 10):
+            continue
+        print(filename)
         process_file(filename)
 

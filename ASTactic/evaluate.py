@@ -23,11 +23,12 @@ if __name__ == '__main__':
     parser.add_argument('--method', type=str, default='ours')
     parser.add_argument('--eval_id', type=str, default=str(datetime.now())[:-7].replace(' ', '-')+'-TEST')
     parser.add_argument('--datapath', type=str, default='../data')
-    parser.add_argument('--projs_split', type=str, default='../projs_split2.json')
+    parser.add_argument('--projs_split', type=str, default='../projs_split.json')
     parser.add_argument('--split', choices=['train', 'valid', 'test'], type=str, default='test')
     parser.add_argument('--file', type=str)  #, default='../data/weak-up-to/Functions.json'
     parser.add_argument('--proof', type=str)  # , default="get_set_same"
-    parser.add_argument('--filter', type=str)
+    parser.add_argument('--filter', type=str, default='')
+    parser.add_argument('--filter2', type=str, default='')
     parser.add_argument('--path', type=str, default='model.pth')
     parser.add_argument('--output_dir', type=str, default='evaluation')
     parser.add_argument('--max_num_tactics', type=int, default=300)
@@ -80,12 +81,16 @@ if __name__ == '__main__':
             files.extend(glob(os.path.join(opts.datapath, '%s/**/*.json' % proj), recursive=True))
 
     if opts.filter:
-        files = [f for f in files if md5(f.encode('utf-8')).hexdigest().startswith(opts.filter)]
+        print("filter " + opts.filter)
+        files = [f for i, f in enumerate(files) if i % 64 == (int(opts.filter) - 1)]
 
     print(files)
     results = []
     bar = ProgressBar(max_value=len(files))
+    #for i, f in enumerate(reversed(files)):
     for i, f in enumerate(files):
+        if opts.filter2 and i % 8 != int(opts.filter2):
+            continue
         print('file: ', f)
         #print('cuda memory allocated before file: ', torch.cuda.memory_allocated(opts.device), file=sys.stderr)
         results.extend(agent.evaluate(f, opts.proof))

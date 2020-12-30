@@ -16,9 +16,10 @@ import gc
 from copy import deepcopy
 from pprint import pprint
 from time import time
+"""
 def print(*args):
     return
-
+"""
 def action_seq_loss(logits_batch, actions_batch, opts):
     assert len(logits_batch) == len(actions_batch)
     loss = 0
@@ -174,7 +175,11 @@ class Agent:
             for proof_env in file_env:  # start a proof
                 if proof_name is not None and proof_env.proof['name'] != proof_name:
                     continue
-                print('proof: ', proof_env.proof['name'])
+                print('proof: ', proof_env.proof['name'])  # extensional_propN_Proper
+                if proof_env.proof['name'] == "prevLog_leader_sublog_init":
+                    print('!')
+                # else:
+                #    continue
                 #print('cuda memory allocated before proof: ', torch.cuda.memory_allocated(self.opts.device), file=sys.stderr)
                 success, proof_pred, time, num_tactics = self.prove(proof_env)
                 results.append({
@@ -237,11 +242,11 @@ class Agent:
                 continue
             else:
                 tac = stack[-1].pop()
-
+            #tac = 'cut (forall xyz:nat, xyz < 3).'
+            #tac = 'cut (forall xyz:nat, xyz < S O).'
             obs = proof_env.step(tac)
             print(obs['result'])
-            print_goals(obs)
-
+            #print_goals(obs)
             if obs['result'] == 'SUCCESS':
                 script.append(tac)
                 time = self.opts.timeout - obs['time_left']
@@ -257,7 +262,7 @@ class Agent:
                 assert obs['result'] == 'PROVING'
                 script.append(tac)
                 sig = get_goal_signature(obs['fg_goals'][0])
-                if sig in first_goal_signatures or len(script) >= self.opts.depth_limit:
+                if sig in first_goal_signatures or len(script) + len(obs['fg_goals']) >= self.opts.depth_limit:
                     proof_env.step('Undo.')
                     script.pop()
                     continue
